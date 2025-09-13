@@ -51,7 +51,7 @@ The project is structured using **microservices architecture**, each responsible
 | Microservices      | Spring Cloud, Eureka                  |
 | Config Management  | Spring Cloud Config Server            |
 | Frontend           | React, Vite, Tailwind CSS             |
-| Database           | MongoDB (for activity & AI data)     |
-
+| Database           | MongoDB (for activity & AI data), PostgreSQL (for user data) |    
+                     
 
 
