@@ -64,9 +64,5 @@ The project is structured using **microservices architecture**, each responsible
 - Node.js & npm
 - Docker (for RabbitMQ or Keycloak if needed)
 
-### Steps
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/anjali-sharma07/Fitness-Microservices-Application.git
-   cd Fitness-Microservices-Application
+
 
