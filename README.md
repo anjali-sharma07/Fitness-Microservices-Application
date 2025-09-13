@@ -52,6 +52,6 @@ The project is structured using **microservices architecture**, each responsible
 | Config Management  | Spring Cloud Config Server            |
 | Frontend           | React, Vite, Tailwind CSS             |
 | Database           | MongoDB (for activity & AI data)     |
-| Testing            | JUnit, Mockito                        |
+
 
 
