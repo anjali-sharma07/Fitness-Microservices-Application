@@ -1,65 +1,81 @@
 package com.fitness.userservice.service;
 
 import com.fitness.userservice.dto.UserResponse;
-import com.fitness.userservice.dto.registerRequest;
+import com.fitness.userservice.dto.RegisterRequest;
 import com.fitness.userservice.model.User;
 import com.fitness.userservice.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository; // extends JpaRepository
+    private final KeycloakAdminService keycloakAdminService;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-
-    public UserResponse register(registerRequest request){
+    @Transactional
+    public UserResponse register(RegisterRequest request) {
+        // 1. Check if user already exists in DB
         Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
-
         if (existingUser.isPresent()) {
-            throw new RuntimeException("Email is already registered: " + request.getEmail());
+            return mapToResponse(existingUser.get());
         }
 
+        // 2. Create user in Keycloak
+        String keycloakId;
+        try {
+            keycloakId = keycloakAdminService.createUserInKeycloak(
+                    request.getEmail(),
+                    request.getPassword(), // Keycloak stores password
+                    request.getFirstName(),
+                    request.getLastName()
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create user in Keycloak: " + e.getMessage(), e);
+        }
 
+        // 3. Save user in DB with hashed password
         User user = new User();
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword())); // hashed locally
+        user.setKeycloakId(keycloakId);
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
 
-        User savedUser = userRepository.save(user);   // user is stored in database
+        User savedUser = userRepository.save(user);
 
-        UserResponse response = new UserResponse();
-        response.setId(savedUser.getId());
-        response.setEmail(savedUser.getEmail());
-        response.setFirstName(savedUser.getFirstName());
-        response.setLastName(savedUser.getLastName());
-        response.setCreatedAt(savedUser.getCreatedAt());
-        response.setUpdatedAt(savedUser.getUpdatedAt());
-
-        return response;
-
+        // 4. Return response
+        return mapToResponse(savedUser);
     }
 
     public UserResponse getByID(String id) {
-        Optional<User> optionalUser = userRepository.findById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        return mapToResponse(user);
+    }
 
-        if (optionalUser.isEmpty()) {
-            throw new RuntimeException("User not found with id: " + id); // or use a custom exception
-        }
+    public boolean existById(String id) {
+        return userRepository.findById(id)
+                .map(u -> u.getKeycloakId() != null)
+                .orElse(false);
+    }
 
-        User savedUser = optionalUser.get();
+    // helper mapper
+    private UserResponse mapToResponse(User user) {
         UserResponse response = new UserResponse();
-        response.setId(savedUser.getId());
-        response.setEmail(savedUser.getEmail());
-        response.setFirstName(savedUser.getFirstName());
-        response.setLastName(savedUser.getLastName());
-        response.setCreatedAt(savedUser.getCreatedAt());
-        response.setUpdatedAt(savedUser.getUpdatedAt());
-
+        response.setId(user.getId());
+        response.setKeycloakId(user.getKeycloakId());
+        response.setEmail(user.getEmail());
+        response.setFirstName(user.getFirstName());
+        response.setLastName(user.getLastName());
+        response.setCreatedAt(user.getCreatedAt());
+        response.setUpdatedAt(user.getUpdatedAt());
         return response;
     }
 }

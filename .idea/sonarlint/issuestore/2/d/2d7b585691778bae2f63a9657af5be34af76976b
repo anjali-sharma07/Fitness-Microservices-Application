@@ -1,0 +1,5 @@
+
+{
+java:S1488K"`Immediately return this expression instead of assigning it to the temporary variable "response".(Óðõ©þÿÿÿÿ
+h
+java:S6204M"RReplace this usage of 'Stream.collect(Collectors.toList())' with 'Stream.toList()'(ª™¨¹
