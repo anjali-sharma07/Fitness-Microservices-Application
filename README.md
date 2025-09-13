@@ -54,15 +54,4 @@ The project is structured using **microservices architecture**, each responsible
 | Database           | MongoDB (for activity & AI data)     |
 | Testing            | JUnit, Mockito                        |
 
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Java 17+
-- Maven
-- Node.js & npm
-- Docker (for RabbitMQ or Keycloak if needed)
-
-
 
